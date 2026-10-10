@@ -22,3 +22,6 @@ user account in the map. The transactions will be presented in reverse chronolog
 I'm assuming that there will be no concurrent access to the ledger, and thus no need for locks or other concurrency control mechanisms.
 9. **Failed transactions**: Failed transactions will be dropped for the sake of simplicity. In a real-world scenario
 these would integrate with a logging system or some kind of persistent storage for audit trail.
+10. **Implicit account creation**: There is no endpoint to create accounts. An account is created the first time a
+user makes a deposit. A withdrawal for a user without an account fails with 404 (Not Found) and does not create one,
+and balance or history requests for an unknown user also return 404.

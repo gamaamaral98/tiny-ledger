@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -36,8 +37,21 @@ public class LedgerServiceImpl implements LedgerService {
 
     @Override
     public Transaction makeTransaction(UUID uuid, Long userId, TransactionType type, BigDecimal amount) {
-        Account account = findAccount(userId);
         Transaction transaction = new Transaction(uuid, LocalDateTime.now(), type, amount);
+
+        if (type.equals(TransactionType.DEPOSIT)) return makeDeposit(userId, transaction);
+        else return makeWithdrawal(userId, transaction);
+    }
+
+    private Transaction makeDeposit(Long userId, Transaction transaction) {
+        Account account = ledgerRepository.findAccount(userId).orElse(new Account());
+        account.applyTransaction(transaction);
+        ledgerRepository.saveAccount(userId, account);
+        return transaction;
+    }
+
+    private Transaction makeWithdrawal(Long userId, Transaction transaction) {
+        Account account = findAccount(userId);
         account.applyTransaction(transaction);
         ledgerRepository.saveAccount(userId, account);
         return transaction;

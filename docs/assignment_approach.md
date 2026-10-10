@@ -23,7 +23,6 @@ Design decisions based on the assumptions and functional requirements.
 ### Transaction
 Represents a single transaction:
 * id (UUID): Unique identifier for the transaction
-* userId (Long): The unique identifier of the user associated with the transaction
 * timestamp (LocalDateTime): The date and time when the transaction occurred
 * type (TransactionType): DEPOSIT or WITHDRAWAL
 * amount (BigDecimal): The amount of money involved in the transaction
@@ -53,10 +52,11 @@ that meets the functional requirements without the need for a database. I'll be 
 where the key is the user id and the value is the account object. This way, by using user id I can retrieve the account
 with O(1) time complexity (reading its transaction history is O(n), see above).
 
-To mimic a real database, `findAccount` returns a copy of the stored `Account`. Changes to that copy only become visible to
-other readers once it is handed back through `saveAccount`, which keeps the repository interface honest and
-storage-agnostic. `saveAccount` doesn't copy again, since callers are expected to hand over the instance they got from
-`findAccount` (or a new one) and not keep modifying it after saving.
+To mimic a real database, the repository never shares its stored `Account` instances: `findAccount` returns a copy and
+`saveAccount` stores a copy. Changes to an `Account` only become visible to other readers once `saveAccount` is called,
+which keeps the repository interface honest and storage-agnostic. As a consequence, a rejected transaction (for example
+an insufficient-funds withdrawal) never alters the stored account, and a new account is only stored after its first
+deposit has been applied successfully.
 
 ## API Design
 REST API with one endpoint per functional requirement, all under `/ledger/{userId}`, where `userId` identifies the
@@ -64,12 +64,12 @@ account owner (authentication is out of scope).
 * FR1: GET /ledger/{userId}/balance - Retrieves the current balance for the specified user.
   * Response codes:
     * 200 OK: Successfully retrieved the balance.
-    * 404 Not Found: User not found.
+    * 404 Not Found: User not found (no account exists for the user).
   * Response body: BigDecimal representing the current balance.
 * FR2: GET /ledger/{userId}/transactions - Retrieves the transaction history for the specified user, most recent first.
     * Response codes:
         * 200 OK: Successfully retrieved the transaction history.
-        * 404 Not Found: User not found.
+        * 404 Not Found: User not found (no account exists for the user).
     * Response body: List of `TransactionResponse` DTOs (id, timestamp, type, amount).
 * FR3: POST /ledger/{userId}/transactions - Records a transaction for the specified user.
     * Headers: `uuid` (the transaction id).
@@ -78,8 +78,10 @@ account owner (authentication is out of scope).
         * 400 Bad Request - Invalid transaction data:
           * **amount** must be present, non-null, and positive
           * **type** must be present and either DEPOSIT or WITHDRAWAL
-        * 404 Not Found: User not found.
+        * 404 Not Found: A withdrawal was requested for a user without an account.
         * 422 Unprocessable Entity: Insufficient funds for withdrawal.
+    * Accounts are created implicitly: the first DEPOSIT for an unknown user creates the account. A WITHDRAWAL for an
+      unknown user is rejected and no account is created.
     * Request body: `TransactionRequest` DTO (type, amount).
     * Response body: `TransactionResponse` DTO (id, timestamp, type, amount).
 
