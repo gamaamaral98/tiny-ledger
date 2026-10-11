@@ -34,30 +34,27 @@ public class LedgerServiceImpl implements LedgerService {
         return transactions.reversed();
     }
 
-    @Override
-    public Transaction makeTransaction(UUID uuid, Long userId, TransactionType type, BigDecimal amount) {
-        Transaction transaction = new Transaction(uuid, LocalDateTime.now(), type, amount);
-
-        if (type.equals(TransactionType.DEPOSIT)) return makeDeposit(userId, transaction);
-        else return makeWithdrawal(userId, transaction);
-    }
-
-    private Transaction makeDeposit(Long userId, Transaction transaction) {
-        Account account = ledgerRepository.findAccount(userId).orElse(new Account());
-        account.applyTransaction(transaction);
-        ledgerRepository.saveAccount(userId, account);
-        return transaction;
-    }
-
-    private Transaction makeWithdrawal(Long userId, Transaction transaction) {
-        Account account = findAccount(userId);
-        account.applyTransaction(transaction);
-        ledgerRepository.saveAccount(userId, account);
-        return transaction;
-    }
-
     private Account findAccount(Long userId) {
         return ledgerRepository.findAccount(userId)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found for userId: " + userId));
+    }
+
+    @Override
+    public Transaction makeTransaction(Long userId, TransactionType type, BigDecimal amount) {
+        Transaction transaction = new Transaction(UUID.randomUUID(), LocalDateTime.now(), type, amount);
+
+        Account account = ledgerRepository.findAccount(userId)
+                .orElseGet(() -> newAccountFor(userId, type));
+        account.applyTransaction(transaction);
+        ledgerRepository.saveAccount(userId, account);
+
+        return transaction;
+    }
+
+    private Account newAccountFor(Long userId, TransactionType type) {
+        if (type == TransactionType.WITHDRAWAL) {
+            throw new AccountNotFoundException("Account not found for userId: " + userId);
+        }
+        return new Account();
     }
 }

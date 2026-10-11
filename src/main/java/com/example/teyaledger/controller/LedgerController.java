@@ -6,14 +6,12 @@ import com.example.teyaledger.model.dto.TransactionRequest;
 import com.example.teyaledger.model.dto.TransactionResponse;
 import com.example.teyaledger.service.LedgerService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/ledger/{userId}")
@@ -40,10 +38,9 @@ public class LedgerController {
     @PostMapping("/transactions")
     public ResponseEntity<TransactionResponse> makeTransaction(
             @PathVariable Long userId,
-            @RequestHeader UUID uuid,
             @Valid @RequestBody TransactionRequest request) {
 
-        Transaction transaction = ledgerService.makeTransaction(uuid, userId, request.type(), request.amount());
+        Transaction transaction = ledgerService.makeTransaction(userId, request.type(), request.amount());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(transactionMapper.toResponse(transaction));
     }

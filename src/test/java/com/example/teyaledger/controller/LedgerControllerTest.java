@@ -119,49 +119,44 @@ class LedgerControllerTest {
 
     @Test
     void shouldReturnDeposit201() throws Exception {
-        UUID requestId = UUID.randomUUID();
         Transaction transaction = new Transaction(UUID.randomUUID(), LocalDateTime.now(), TransactionType.DEPOSIT, new BigDecimal("100.00"));
         TransactionResponse response = new TransactionResponse(transaction.id(), transaction.timestamp(), transaction.type(), transaction.amount());
 
-        when(ledgerService.makeTransaction(requestId, 1L, TransactionType.DEPOSIT, new BigDecimal("100.00")))
+        when(ledgerService.makeTransaction(1L, TransactionType.DEPOSIT, new BigDecimal("100.00")))
                 .thenReturn(transaction);
         when(transactionMapper.toResponse(transaction)).thenReturn(response);
 
         mockMvc.perform(post("/ledger/{userId}/transactions", 1L)
-                        .header("uuid", requestId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody(TransactionType.DEPOSIT, "100.00")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.type").value("DEPOSIT"));
 
-        verify(ledgerService).makeTransaction(requestId, 1L, TransactionType.DEPOSIT, new BigDecimal("100.00"));
+        verify(ledgerService).makeTransaction(1L, TransactionType.DEPOSIT, new BigDecimal("100.00"));
     }
 
     @Test
     void shouldReturnWithdrawal201() throws Exception {
-        UUID requestId = UUID.randomUUID();
         Transaction transaction = new Transaction(UUID.randomUUID(), LocalDateTime.now(), TransactionType.WITHDRAWAL, new BigDecimal("50.00"));
         TransactionResponse response = new TransactionResponse(transaction.id(), transaction.timestamp(), transaction.type(), transaction.amount());
 
-        when(ledgerService.makeTransaction(requestId, 1L, TransactionType.WITHDRAWAL, new BigDecimal("50.00")))
+        when(ledgerService.makeTransaction(1L, TransactionType.WITHDRAWAL, new BigDecimal("50.00")))
                 .thenReturn(transaction);
         when(transactionMapper.toResponse(transaction))
                 .thenReturn(response);
 
         mockMvc.perform(post("/ledger/{userId}/transactions", 1L)
-                        .header("uuid", requestId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody(TransactionType.WITHDRAWAL, "50.00")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.type").value("WITHDRAWAL"));
 
-        verify(ledgerService).makeTransaction(requestId, 1L, TransactionType.WITHDRAWAL, new BigDecimal("50.00"));
+        verify(ledgerService).makeTransaction(1L, TransactionType.WITHDRAWAL, new BigDecimal("50.00"));
     }
 
     @Test
     void shouldNotReturnTransaction400WhenUserIdInvalid() throws Exception {
         mockMvc.perform(post("/ledger/{userId}/transactions", "invalidUserId")
-                        .header("uuid", UUID.randomUUID().toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody(TransactionType.DEPOSIT, "100.00")))
                 .andExpect(status().isBadRequest());
@@ -185,7 +180,6 @@ class LedgerControllerTest {
     })
     void shouldNotReturnTransaction400ForInvalidBody(String body) throws Exception {
         mockMvc.perform(post("/ledger/{userId}/transactions", 1L)
-                        .header("uuid", UUID.randomUUID().toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isBadRequest());
@@ -195,12 +189,10 @@ class LedgerControllerTest {
 
     @Test
     void shouldNotReturnTransaction404() throws Exception {
-        UUID requestId = UUID.randomUUID();
-        when(ledgerService.makeTransaction(requestId, 1L, TransactionType.WITHDRAWAL, new BigDecimal("100.00")))
+        when(ledgerService.makeTransaction(1L, TransactionType.WITHDRAWAL, new BigDecimal("100.00")))
                 .thenThrow(new AccountNotFoundException("Account not found"));
 
         mockMvc.perform(post("/ledger/{userId}/transactions", 1L)
-                        .header("uuid", requestId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody(TransactionType.WITHDRAWAL, "100.00")))
                 .andExpect(status().isNotFound())
@@ -209,12 +201,10 @@ class LedgerControllerTest {
 
     @Test
     void shouldNotReturnTransaction422() throws Exception {
-        UUID requestId = UUID.randomUUID();
-        when(ledgerService.makeTransaction(requestId, 1L, TransactionType.WITHDRAWAL, new BigDecimal("1000.00")))
+        when(ledgerService.makeTransaction(1L, TransactionType.WITHDRAWAL, new BigDecimal("1000.00")))
                 .thenThrow(new InsufficientFundsException("Insufficient funds"));
 
         mockMvc.perform(post("/ledger/{userId}/transactions", 1L)
-                        .header("uuid", requestId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody(TransactionType.WITHDRAWAL, "1000.00")))
                 .andExpect(status().isUnprocessableContent())
@@ -224,16 +214,14 @@ class LedgerControllerTest {
     @ParameterizedTest
     @ValueSource(strings = {"0.01", "999999.99"})
     void shouldAcceptBoundaryAmounts(String amount) throws Exception {
-        UUID requestId = UUID.randomUUID();
         BigDecimal value = new BigDecimal(amount);
         Transaction transaction = new Transaction(UUID.randomUUID(), LocalDateTime.now(), TransactionType.DEPOSIT, value);
 
-        when(ledgerService.makeTransaction(requestId, 1L, TransactionType.DEPOSIT, value)).thenReturn(transaction);
+        when(ledgerService.makeTransaction(1L, TransactionType.DEPOSIT, value)).thenReturn(transaction);
         when(transactionMapper.toResponse(transaction))
                 .thenReturn(new TransactionResponse(transaction.id(), transaction.timestamp(), transaction.type(), value));
 
         mockMvc.perform(post("/ledger/{userId}/transactions", 1L)
-                        .header("uuid", requestId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody(TransactionType.DEPOSIT, amount)))
                 .andExpect(status().isCreated());

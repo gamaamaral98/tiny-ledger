@@ -92,12 +92,11 @@ class LedgerServiceImplTest {
 
     @Test
     void shouldCreateAccountAndSaveWhenDepositingToUnknownAccount() {
-        UUID uuid = UUID.randomUUID();
         when(ledgerRepository.findAccount(USER_ID)).thenReturn(Optional.empty());
 
-        Transaction result = ledgerService.makeTransaction(uuid, USER_ID, TransactionType.DEPOSIT, new BigDecimal("50.00"));
+        Transaction result = ledgerService.makeTransaction(USER_ID, TransactionType.DEPOSIT, new BigDecimal("50.00"));
 
-        assertEquals(uuid, result.id());
+        assertNotNull(result.id());
         assertEquals(TransactionType.DEPOSIT, result.type());
         assertEquals(0, new BigDecimal("50.00").compareTo(result.amount()));
         assertNotNull(result.timestamp());
@@ -111,7 +110,7 @@ class LedgerServiceImplTest {
     void shouldApplyTransactionAndSaveWhenDepositingToExistingAccount() {
         when(ledgerRepository.findAccount(USER_ID)).thenReturn(Optional.of(accountWithDeposit("100.00")));
 
-        Transaction result = ledgerService.makeTransaction(UUID.randomUUID(), USER_ID, TransactionType.DEPOSIT, new BigDecimal("25.00"));
+        Transaction result = ledgerService.makeTransaction(USER_ID, TransactionType.DEPOSIT, new BigDecimal("25.00"));
 
         ArgumentCaptor<Account> captor = ArgumentCaptor.forClass(Account.class);
         verify(ledgerRepository).saveAccount(eq(USER_ID), captor.capture());
@@ -120,15 +119,24 @@ class LedgerServiceImplTest {
 
     @Test
     void shouldSaveWhenWithdrawingWithSufficientFunds() {
-        UUID uuid = UUID.randomUUID();
         when(ledgerRepository.findAccount(USER_ID)).thenReturn(Optional.of(accountWithDeposit("100.00")));
 
-        Transaction result = ledgerService.makeTransaction(uuid, USER_ID, TransactionType.WITHDRAWAL, new BigDecimal("40.00"));
+        Transaction result = ledgerService.makeTransaction(USER_ID, TransactionType.WITHDRAWAL, new BigDecimal("40.00"));
 
-        assertEquals(uuid, result.id());
+        assertNotNull(result.id());
         assertEquals(TransactionType.WITHDRAWAL, result.type());
 
         verify(ledgerRepository).saveAccount(eq(USER_ID), any(Account.class));
+    }
+
+    @Test
+    void shouldGenerateDistinctIdsForEachTransaction() {
+        when(ledgerRepository.findAccount(USER_ID)).thenReturn(Optional.empty());
+
+        Transaction first = ledgerService.makeTransaction(USER_ID, TransactionType.DEPOSIT, new BigDecimal("10.00"));
+        Transaction second = ledgerService.makeTransaction(USER_ID, TransactionType.DEPOSIT, new BigDecimal("10.00"));
+
+        assertNotEquals(first.id(), second.id());
     }
 
     @Test
@@ -136,7 +144,7 @@ class LedgerServiceImplTest {
         when(ledgerRepository.findAccount(USER_ID)).thenReturn(Optional.of(accountWithDeposit("10.00")));
 
         assertThrows(InsufficientFundsException.class,
-                () -> ledgerService.makeTransaction(UUID.randomUUID(), USER_ID, TransactionType.WITHDRAWAL, new BigDecimal("10.01")));
+                () -> ledgerService.makeTransaction(USER_ID, TransactionType.WITHDRAWAL, new BigDecimal("10.01")));
 
         verify(ledgerRepository, never()).saveAccount(any(), any());
     }
@@ -146,7 +154,7 @@ class LedgerServiceImplTest {
         when(ledgerRepository.findAccount(USER_ID)).thenReturn(Optional.empty());
 
         assertThrows(AccountNotFoundException.class,
-                () -> ledgerService.makeTransaction(UUID.randomUUID(), USER_ID, TransactionType.WITHDRAWAL, new BigDecimal("1.00")));
+                () -> ledgerService.makeTransaction(USER_ID, TransactionType.WITHDRAWAL, new BigDecimal("1.00")));
 
         verify(ledgerRepository, never()).saveAccount(any(), any());
     }
