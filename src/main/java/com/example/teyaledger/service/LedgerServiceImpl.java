@@ -8,7 +8,7 @@ import com.example.teyaledger.persistence.LedgerRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,7 +41,7 @@ public class LedgerServiceImpl implements LedgerService {
 
     @Override
     public Transaction makeTransaction(Long userId, TransactionType type, BigDecimal amount) {
-        Transaction transaction = new Transaction(UUID.randomUUID(), LocalDateTime.now(), type, amount);
+        Transaction transaction = new Transaction(UUID.randomUUID(), Instant.now(), type, amount);
 
         Account account = ledgerRepository.findAccount(userId)
                 .orElseGet(() -> newAccountFor(userId, type));

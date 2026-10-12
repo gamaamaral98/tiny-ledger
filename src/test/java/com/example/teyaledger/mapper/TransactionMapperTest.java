@@ -6,7 +6,7 @@ import com.example.teyaledger.model.dto.TransactionResponse;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,7 +19,7 @@ class TransactionMapperTest {
 
     @Test
     void shouldConvertDomainTransactionToDTOTransactionResponse() {
-        Transaction transaction = new Transaction(UUID.randomUUID(), LocalDateTime.now(), TransactionType.DEPOSIT, new BigDecimal("100.00"));
+        Transaction transaction = new Transaction(UUID.randomUUID(), Instant.now(), TransactionType.DEPOSIT, new BigDecimal("100.00"));
         TransactionResponse response = transactionMapper.toResponse(transaction);
 
         assertNotNull(response);
@@ -31,8 +31,8 @@ class TransactionMapperTest {
 
     @Test
     void shouldConvertMultipleDomainTransactionToDTOTransactionResponse() {
-        Transaction transaction1 = new Transaction(UUID.randomUUID(), LocalDateTime.now(), TransactionType.DEPOSIT, new BigDecimal("100.00"));
-        Transaction transaction2 = new Transaction(UUID.randomUUID(), LocalDateTime.now(), TransactionType.WITHDRAWAL, new BigDecimal("50.00"));
+        Transaction transaction1 = new Transaction(UUID.randomUUID(), Instant.now(), TransactionType.DEPOSIT, new BigDecimal("100.00"));
+        Transaction transaction2 = new Transaction(UUID.randomUUID(), Instant.now(), TransactionType.WITHDRAWAL, new BigDecimal("50.00"));
 
         var transactions = List.of(transaction1, transaction2);
         var responses = transactionMapper.toResponses(transactions);

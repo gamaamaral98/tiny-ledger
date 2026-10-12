@@ -6,6 +6,7 @@ import com.example.teyaledger.model.dto.TransactionRequest;
 import com.example.teyaledger.model.dto.TransactionResponse;
 import com.example.teyaledger.service.LedgerService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,18 +27,18 @@ public class LedgerController {
     }
 
     @GetMapping("/balance")
-    public BigDecimal getBalance(@PathVariable Long userId) {
+    public BigDecimal getBalance(@PathVariable @Positive Long userId) {
         return ledgerService.getBalance(userId);
     }
 
     @GetMapping("/transactions")
-    public List<TransactionResponse> getTransactions(@PathVariable Long userId) {
+    public List<TransactionResponse> getTransactions(@PathVariable @Positive Long userId) {
         return transactionMapper.toResponses(ledgerService.getTransactions(userId));
     }
 
     @PostMapping("/transactions")
     public ResponseEntity<TransactionResponse> makeTransaction(
-            @PathVariable Long userId,
+            @PathVariable @Positive Long userId,
             @Valid @RequestBody TransactionRequest request) {
 
         Transaction transaction = ledgerService.makeTransaction(userId, request.type(), request.amount());

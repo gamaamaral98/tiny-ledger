@@ -4,7 +4,7 @@ import com.example.teyaledger.exceptions.InsufficientFundsException;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class AccountTest {
 
     private Transaction transaction(TransactionType type, String amount) {
-        return new Transaction(UUID.randomUUID(), LocalDateTime.now(), type, new BigDecimal(amount));
+        return new Transaction(UUID.randomUUID(), Instant.now(), type, new BigDecimal(amount));
     }
 
     @Test

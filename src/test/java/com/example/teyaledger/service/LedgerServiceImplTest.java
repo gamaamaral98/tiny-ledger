@@ -14,7 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,7 +35,7 @@ class LedgerServiceImplTest {
     private LedgerServiceImpl ledgerService;
 
     private Transaction transaction(TransactionType type, String amount) {
-        return new Transaction(UUID.randomUUID(), LocalDateTime.now(), type, new BigDecimal(amount));
+        return new Transaction(UUID.randomUUID(), Instant.now(), type, new BigDecimal(amount));
     }
 
     private Account accountWithDeposit(String amount) {

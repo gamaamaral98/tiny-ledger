@@ -19,7 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
@@ -32,6 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(LedgerController.class)
 class LedgerControllerTest {
+    private static final Instant NOW = Instant.parse("2026-10-12T10:15:30Z");
+
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -53,7 +55,18 @@ class LedgerControllerTest {
     @Test
     void shouldNotReturnBalance400() throws Exception {
         mockMvc.perform(get("/ledger/{userId}/balance", "invalidUserId"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON));
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {0, -1})
+    void shouldNotReturnBalance400WhenUserIdNotPositive(long userId) throws Exception {
+        mockMvc.perform(get("/ledger/{userId}/balance", userId))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON));
+
+        verifyNoInteractions(ledgerService);
     }
 
     @Test
@@ -75,10 +88,9 @@ class LedgerControllerTest {
 
     @Test
     void shouldReturnTransactions200() throws Exception {
-        LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
-        Transaction transaction1 = new Transaction(UUID.randomUUID(), now.minusYears(1), TransactionType.DEPOSIT, new BigDecimal("100.0"));
-        Transaction transaction2 = new Transaction(UUID.randomUUID(), now.minusMonths(6), TransactionType.WITHDRAWAL, new BigDecimal("50.0"));
-        Transaction transaction3 = new Transaction(UUID.randomUUID(), now.minusDays(1), TransactionType.DEPOSIT, new BigDecimal("200.0"));
+        Transaction transaction1 = new Transaction(UUID.randomUUID(), NOW.minus(365, ChronoUnit.DAYS), TransactionType.DEPOSIT, new BigDecimal("100.0"));
+        Transaction transaction2 = new Transaction(UUID.randomUUID(), NOW.minus(180, ChronoUnit.DAYS), TransactionType.WITHDRAWAL, new BigDecimal("50.0"));
+        Transaction transaction3 = new Transaction(UUID.randomUUID(), NOW.minus(1, ChronoUnit.DAYS), TransactionType.DEPOSIT, new BigDecimal("200.0"));
         List<Transaction> transactions = List.of(transaction1, transaction2, transaction3);
 
         when(ledgerService.getTransactions(1L)).thenReturn(transactions);
@@ -106,7 +118,18 @@ class LedgerControllerTest {
     @Test
     void shouldNotReturnTransactions400() throws Exception {
         mockMvc.perform(get("/ledger/{userId}/transactions", "invalidUserId"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON));
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {0, -1})
+    void shouldNotReturnTransactions400WhenUserIdNotPositive(long userId) throws Exception {
+        mockMvc.perform(get("/ledger/{userId}/transactions", userId))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON));
+
+        verifyNoInteractions(ledgerService);
     }
 
     @Test
@@ -119,7 +142,7 @@ class LedgerControllerTest {
 
     @Test
     void shouldReturnDeposit201() throws Exception {
-        Transaction transaction = new Transaction(UUID.randomUUID(), LocalDateTime.now(), TransactionType.DEPOSIT, new BigDecimal("100.00"));
+        Transaction transaction = new Transaction(UUID.randomUUID(), NOW, TransactionType.DEPOSIT, new BigDecimal("100.00"));
         TransactionResponse response = new TransactionResponse(transaction.id(), transaction.timestamp(), transaction.type(), transaction.amount());
 
         when(ledgerService.makeTransaction(1L, TransactionType.DEPOSIT, new BigDecimal("100.00")))
@@ -130,14 +153,15 @@ class LedgerControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody(TransactionType.DEPOSIT, "100.00")))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.type").value("DEPOSIT"));
+                .andExpect(jsonPath("$.type").value("DEPOSIT"))
+                .andExpect(jsonPath("$.timestamp").value("2026-10-12T10:15:30Z"));
 
         verify(ledgerService).makeTransaction(1L, TransactionType.DEPOSIT, new BigDecimal("100.00"));
     }
 
     @Test
     void shouldReturnWithdrawal201() throws Exception {
-        Transaction transaction = new Transaction(UUID.randomUUID(), LocalDateTime.now(), TransactionType.WITHDRAWAL, new BigDecimal("50.00"));
+        Transaction transaction = new Transaction(UUID.randomUUID(), NOW, TransactionType.WITHDRAWAL, new BigDecimal("50.00"));
         TransactionResponse response = new TransactionResponse(transaction.id(), transaction.timestamp(), transaction.type(), transaction.amount());
 
         when(ledgerService.makeTransaction(1L, TransactionType.WITHDRAWAL, new BigDecimal("50.00")))
@@ -159,7 +183,20 @@ class LedgerControllerTest {
         mockMvc.perform(post("/ledger/{userId}/transactions", "invalidUserId")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody(TransactionType.DEPOSIT, "100.00")))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON));
+
+        verifyNoInteractions(ledgerService);
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {0, -1})
+    void shouldNotReturnTransaction400WhenUserIdNotPositive(long userId) throws Exception {
+        mockMvc.perform(post("/ledger/{userId}/transactions", userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody(TransactionType.DEPOSIT, "100.00")))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON));
 
         verifyNoInteractions(ledgerService);
     }
@@ -182,7 +219,8 @@ class LedgerControllerTest {
         mockMvc.perform(post("/ledger/{userId}/transactions", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON));
 
         verifyNoInteractions(ledgerService);
     }
@@ -215,7 +253,7 @@ class LedgerControllerTest {
     @ValueSource(strings = {"0.01", "999999.99"})
     void shouldAcceptBoundaryAmounts(String amount) throws Exception {
         BigDecimal value = new BigDecimal(amount);
-        Transaction transaction = new Transaction(UUID.randomUUID(), LocalDateTime.now(), TransactionType.DEPOSIT, value);
+        Transaction transaction = new Transaction(UUID.randomUUID(), NOW, TransactionType.DEPOSIT, value);
 
         when(ledgerService.makeTransaction(1L, TransactionType.DEPOSIT, value)).thenReturn(transaction);
         when(transactionMapper.toResponse(transaction))

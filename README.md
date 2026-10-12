@@ -30,14 +30,16 @@ The app listens on `http://localhost:8080`.
 
 ## API endpoints
 
-All endpoints live under `/ledger/{userId}`, where `userId` is a numeric id. An account is created implicitly by the
-user's first deposit.
+All endpoints live under `/ledger/{userId}`, where `userId` is a positive numeric id (anything else returns 400). An
+account is created implicitly by the user's first deposit.
 
 | Method | Endpoint                         | Description                                  | Responses                                  |
 |--------|----------------------------------|----------------------------------------------|--------------------------------------------|
-| POST   | `/ledger/{userId}/transactions`  | Record a `DEPOSIT` or `WITHDRAWAL`           | 201, 400 (invalid body), 404 (withdrawal without account), 422 (insufficient funds) |
-| GET    | `/ledger/{userId}/balance`       | Get the current balance                      | 200, 404 (unknown user)                    |
-| GET    | `/ledger/{userId}/transactions`  | List transactions, most recent first         | 200, 404 (unknown user)                    |
+| POST   | `/ledger/{userId}/transactions`  | Record a `DEPOSIT` or `WITHDRAWAL`           | 201, 400 (invalid body or userId), 404 (withdrawal without account), 422 (insufficient funds) |
+| GET    | `/ledger/{userId}/balance`       | Get the current balance                      | 200, 400 (invalid userId), 404 (unknown user) |
+| GET    | `/ledger/{userId}/transactions`  | List transactions, most recent first         | 200, 400 (invalid userId), 404 (unknown user) |
+
+Errors are returned as Problem Details.
 
 Request body for `POST`: `{"type": "DEPOSIT" | "WITHDRAWAL", "amount": <positive number>}`
 
@@ -51,7 +53,7 @@ curl -X POST http://localhost:8080/ledger/1/transactions \
 
 ## Example flow
 
-Start the app, then run the following for user `1`. Ids and timestamps will differ in your output.
+Start the app, then run the following for user `1`. Ids and timestamps will differ in your output. Timestamps are in UTC.
 
 **1. Deposit money (this opens the account)**
 
@@ -61,7 +63,7 @@ curl -X POST http://localhost:8080/ledger/1/transactions \
   -d '{"type": "DEPOSIT", "amount": 100.00}'
 ```
 ```json
-{"id":"c3e12412-29b0-4e43-9bee-dd70c9ba2abd","timestamp":"2026-10-11T22:33:06.459444","type":"DEPOSIT","amount":100.00}
+{"id":"c3e12412-29b0-4e43-9bee-dd70c9ba2abd","timestamp":"2026-10-11T21:33:06.459444Z","type":"DEPOSIT","amount":100.00}
 ```
 
 **2. Deposit more money**
@@ -72,7 +74,7 @@ curl -X POST http://localhost:8080/ledger/1/transactions \
   -d '{"type": "DEPOSIT", "amount": 50.50}'
 ```
 ```json
-{"id":"b8b5def6-f619-437b-9f0e-d7d520c3dedd","timestamp":"2026-10-11T22:33:06.483514","type":"DEPOSIT","amount":50.50}
+{"id":"b8b5def6-f619-437b-9f0e-d7d520c3dedd","timestamp":"2026-10-11T21:33:06.483514Z","type":"DEPOSIT","amount":50.50}
 ```
 
 **3. Check balance**
@@ -92,7 +94,7 @@ curl -X POST http://localhost:8080/ledger/1/transactions \
   -d '{"type": "WITHDRAWAL", "amount": 30.00}'
 ```
 ```json
-{"id":"c23af44f-327e-41c8-87d1-b6b76932a353","timestamp":"2026-10-11T22:33:06.514323","type":"WITHDRAWAL","amount":30.00}
+{"id":"c23af44f-327e-41c8-87d1-b6b76932a353","timestamp":"2026-10-11T21:33:06.514323Z","type":"WITHDRAWAL","amount":30.00}
 ```
 
 **5. Check balance**
@@ -111,9 +113,9 @@ curl http://localhost:8080/ledger/1/transactions
 ```
 ```json
 [
-  {"id":"c23af44f-327e-41c8-87d1-b6b76932a353","timestamp":"2026-10-11T22:33:06.514323","type":"WITHDRAWAL","amount":30.00},
-  {"id":"b8b5def6-f619-437b-9f0e-d7d520c3dedd","timestamp":"2026-10-11T22:33:06.483514","type":"DEPOSIT","amount":50.50},
-  {"id":"c3e12412-29b0-4e43-9bee-dd70c9ba2abd","timestamp":"2026-10-11T22:33:06.459444","type":"DEPOSIT","amount":100.00}
+  {"id":"c23af44f-327e-41c8-87d1-b6b76932a353","timestamp":"2026-10-11T21:33:06.514323Z","type":"WITHDRAWAL","amount":30.00},
+  {"id":"b8b5def6-f619-437b-9f0e-d7d520c3dedd","timestamp":"2026-10-11T21:33:06.483514Z","type":"DEPOSIT","amount":50.50},
+  {"id":"c3e12412-29b0-4e43-9bee-dd70c9ba2abd","timestamp":"2026-10-11T21:33:06.459444Z","type":"DEPOSIT","amount":100.00}
 ]
 ```
 

@@ -6,7 +6,7 @@ import com.example.teyaledger.model.domain.TransactionType;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,7 +17,7 @@ class InMemoryLedgerRepositoryTest {
     private final InMemoryLedgerRepository repository = new InMemoryLedgerRepository();
 
     private Transaction deposit(String amount) {
-        return new Transaction(UUID.randomUUID(), LocalDateTime.now(), TransactionType.DEPOSIT, new BigDecimal(amount));
+        return new Transaction(UUID.randomUUID(), Instant.now(), TransactionType.DEPOSIT, new BigDecimal(amount));
     }
 
     @Test
