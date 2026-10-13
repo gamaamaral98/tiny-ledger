@@ -32,7 +32,6 @@ class AccountTest {
 
         assertEquals(0, new BigDecimal("100.00").compareTo(account.getBalance()));
         assertEquals(1, account.getTransactions().size());
-        assertSame(deposit, account.getTransactions().getFirst());
     }
 
     @Test

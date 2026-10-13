@@ -10,7 +10,7 @@ class GlobalExceptionHandlerTest {
     private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
 
     @Test
-    void shouldHandleInsufficientFundsException422WithMessage() {
+    void shouldHandleInsufficientFundsExceptionWithMessage422() {
         ProblemDetail result = handler.handleInsufficientFundsException(
                 new InsufficientFundsException("Insufficient funds"));
 
@@ -19,7 +19,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void shouldHandleAccountNotFoundException404WithMessage() {
+    void shouldHandleAccountNotFoundExceptionWithMessage404() {
         ProblemDetail result = handler.handleAccountNotFoundException(
                 new AccountNotFoundException("Account not found"));
 

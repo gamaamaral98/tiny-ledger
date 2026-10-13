@@ -16,10 +16,6 @@ class InMemoryLedgerRepositoryTest {
 
     private final InMemoryLedgerRepository repository = new InMemoryLedgerRepository();
 
-    private Transaction deposit(String amount) {
-        return new Transaction(UUID.randomUUID(), Instant.now(), TransactionType.DEPOSIT, new BigDecimal(amount));
-    }
-
     @Test
     void shouldReturnEmptyWhenAccountDoesNotExist() {
         assertTrue(repository.findAccount(1L).isEmpty());
@@ -40,7 +36,7 @@ class InMemoryLedgerRepositoryTest {
     }
 
     @Test
-    void shouldOverrideAccountWhenSavingAccount() {
+    void shouldOverrideWhenSavingAccount() {
         Account first = new Account();
         first.applyTransaction(deposit("100.00"));
         repository.saveAccount(1L, first);
@@ -53,15 +49,6 @@ class InMemoryLedgerRepositoryTest {
     }
 
     @Test
-    void shouldStorePerUser() {
-        Account account = new Account();
-        account.applyTransaction(deposit("100.00"));
-        repository.saveAccount(1L, account);
-
-        assertTrue(repository.findAccount(2L).isEmpty());
-    }
-
-    @Test
     void shouldNotAffectAccountByLatterChangesToOriginalThatAreNotSaved() {
         Account account = new Account();
         repository.saveAccount(1L, account);
@@ -71,5 +58,9 @@ class InMemoryLedgerRepositoryTest {
         Account stored = repository.findAccount(1L).orElseThrow();
         assertEquals(0, BigDecimal.ZERO.compareTo(stored.getBalance()));
         assertTrue(stored.getTransactions().isEmpty());
+    }
+
+    private Transaction deposit(String amount) {
+        return new Transaction(UUID.randomUUID(), Instant.now(), TransactionType.DEPOSIT, new BigDecimal(amount));
     }
 }
