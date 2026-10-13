@@ -50,8 +50,10 @@ Represents a user's account:
 * transactions (List<Transaction>): A list of transactions associated with the account
 
 As defined in the assumptions, I'll link the users to their accounts using a Map, where the key is the user id and the value is
-the account object. The transactions are stored in a list in chronological order. To present them in reverse chronological order I use
-``List.reversed()`` (Java 21), which returns a reversed view without re-sorting.
+the account object. To mimic a real world scenario, where transactions are presented in reverse chronological order, and since
+the only use case for the transaction history in this small project is to present it to the user, the transactions are 
+stored at the head of a LinkedList. I could store them in an ArrayList and use Java 21 `List.reversed()` which returns a view
+without re-sorting, but this way I keep out the view generation and present it as is.
 
 `Account.getTransactions()` returns an immutable copy (``List.copyOf``) instead of the internal list. This makes every
 history read O(n) in the number of transactions, but it protects the history from being modified from outside the
@@ -60,21 +62,19 @@ at the scale of this exercise O(n) is irrelevant, and I prefer protecting the in
 
 ## Data Persistence
 I'm using an in-memory data structure to store user accounts and their associated data. This is a simple implementation
-that meets the functional requirements without the need for a database. I'll be using an implementation of the Map interface to store the accounts, 
-where the key is the user id and the value is the account object. The map lookup by user id is O(1).
+that meets the functional requirements without the need for a database. I'll be using an implementation of the Map 
+interface to store the accounts, where the key is the user id and the value is the account object. 
+The map lookup by user id is O(1).
 
 To mimic a real database, the repository never shares its stored `Account` instances: `findAccount` returns a copy and
 `saveAccount` stores a copy. Changes to an `Account` only become visible to other readers once `saveAccount` is called,
-which keeps the repository interface honest and storage-agnostic. As a consequence, a rejected transaction (for example
-an insufficient-funds withdrawal) never alters the stored account, and a new account is only stored after its first
-deposit has been applied successfully.
-
-Copying an account also copies its transaction list, so every repository read or write is O(n) in the number of
-transactions, including balance reads. At the scale of this exercise that cost is irrelevant, and in exchange the
-in-memory repository behaves like one backed by a database: a read returns a new object built from the stored data, never
-a reference to the stored object itself. Without the copies, the service would hold the same reference that is stored in
-the map, so any change made to that object after a save would silently change the stored account too. With the copies,
-the only way to change what is stored is to call `saveAccount`.
+which keeps the repository interface honest and storage-agnostic. As a consequence I have to give up the O(1) when looking
+for the account, since the copy operation is O(n) because of the transaction list. This is a conscious trade-off: at the 
+scale of this exercise O(n) is irrelevant, and I prefer to protect the integrity of the stored data and be closer to the
+behavior of a database where a read returns a new object built from the stored data, never a reference to the stored object.
+Without the copies, the service would hold the same reference that is stored in the map, so any change made to that object 
+after a save would silently change the stored account too. With the copies, the only way to change what is stored is 
+to call `saveAccount`.
 
 ## API Design
 REST API with one endpoint per functional requirement, all under `/ledger/{userId}`, where `userId` identifies the

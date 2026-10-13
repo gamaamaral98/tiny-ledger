@@ -30,8 +30,7 @@ public class LedgerServiceImpl implements LedgerService {
     @Override
     public List<Transaction> getTransactions(Long userId) {
         Account account = findAccount(userId);
-        List<Transaction> transactions = account.getTransactions();
-        return transactions.reversed();
+        return account.getTransactions();
     }
 
     private Account findAccount(Long userId) {

@@ -4,6 +4,7 @@ import com.example.teyaledger.exceptions.InsufficientFundsException;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class Account {
@@ -17,7 +18,7 @@ public class Account {
 
     private Account(BigDecimal balance, List<Transaction> transactions) {
         this.balance = balance;
-        this.transactions = new ArrayList<>(transactions);
+        this.transactions = new LinkedList<>(transactions);
     }
 
     public Account copy() {
@@ -44,6 +45,6 @@ public class Account {
             }
         }
 
-        transactions.add(transaction);
+        transactions.addFirst(transaction);
     }
 }

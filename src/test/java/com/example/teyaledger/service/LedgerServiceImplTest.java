@@ -114,7 +114,7 @@ class LedgerServiceImplTest {
 
         ArgumentCaptor<Account> captor = ArgumentCaptor.forClass(Account.class);
         verify(ledgerRepository).saveAccount(eq(USER_ID), captor.capture());
-        assertEquals(result, captor.getValue().getTransactions().getLast());
+        assertEquals(result, captor.getValue().getTransactions().getFirst());
     }
 
     @Test
