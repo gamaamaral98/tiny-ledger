@@ -3,7 +3,6 @@ package com.example.teyaledger.model.domain;
 import com.example.teyaledger.exceptions.InsufficientFundsException;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -13,7 +12,7 @@ public class Account {
 
     public Account() {
         this.balance = BigDecimal.ZERO;
-        this.transactions = new ArrayList<>();
+        this.transactions = new LinkedList<>();
     }
 
     private Account(BigDecimal balance, List<Transaction> transactions) {

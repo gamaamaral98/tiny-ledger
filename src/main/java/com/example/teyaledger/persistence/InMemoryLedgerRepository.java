@@ -1,7 +1,6 @@
 package com.example.teyaledger.persistence;
 
 import com.example.teyaledger.model.domain.Account;
-
 import org.springframework.stereotype.Repository;
 
 import java.util.HashMap;

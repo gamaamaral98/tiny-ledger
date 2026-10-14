@@ -9,8 +9,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
-import java.util.stream.IntStream;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -24,15 +22,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class LedgerFlowTest {
 
     private static final long USER_ID = 1000L;
+    private static final long OTHER_USER_ID = USER_ID + 100_000;
 
     @Autowired
     private MockMvc mockMvc;
 
     @Test
     void shouldKeepAccountsSeparate() throws Exception {
-
-        long OTHER_USER_ID = USER_ID + 100_000;
-
         deposit("50.00")
                 .andExpect(status().isCreated());
 
@@ -105,10 +101,9 @@ class LedgerFlowTest {
         mockMvc.perform(get(url("/transactions")))
                 .andExpect(status().isNotFound());
 
-        withdraw("10.00").andExpect(status()
-                .isNotFound());
+        withdraw("10.00")
+                .andExpect(status().isNotFound());
     }
-
 
     private ResultActions deposit(String amount) throws Exception {
         return send("DEPOSIT", amount);
