@@ -1,4 +1,4 @@
-# Teya Ledger
+# Tiny Ledger
 
 A tiny ledger web API built with Java and Spring Boot. It records deposits and withdrawals, shows the current balance
 and lists the transaction history per user. Data is kept in memory, so nothing besides the JDK is needed to run it.
